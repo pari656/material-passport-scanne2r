@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>XCO2 Material Passport Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f1;
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      padding: 25px;
+      width: 95%;
+      max-width: 500px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    .logo {
+      width: 80px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: #1e4d2b;
+      margin: 10px 0 5px;
+    }
+
+    .tagline {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    #reader {
+      margin: 0 auto 20px;
+      width: 100%;
+      max-width: 350px;
+      height: 350px;
+      border: 2px dashed #3a7d44;
+      border-radius: 10px;
+    }
+
+    button {
+      background-color: #3a7d44;
+      color: #fff;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2c5f34;
+    }
+
+    .status-text {
+      margin-top: 15px;
+      font-size: 0.95rem;
+      color: #1e4d2b;
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 25px;
+      font-size: 0.85rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="https://static.vecteezy.com/system/resources/previews/000/604/199/original/leaf-green-nature-logo-and-symbol-template-vector.jpg" alt="XCO2 Logo" class="logo" />
+    <h1>Material Passport Scanner</h1>
+    <p class="tagline">Scan construction materials to access their digital passports</p>
+
+    <div id="reader" class="scanner-box"></div>
+    <button onclick="startScanner()">📷 Start Scan</button>
+    <p id="status" class="status-text">Awaiting scan...</p>
+
+    <footer>
+      <p>© 2025 XCO2 Consultancy | Material Reuse & Circular Economy Services</p>
+    </footer>
+  </div>
+
+  <script>
+    let scanner;
+
+    function startScanner() {
+      document.getElementById('status').innerText = '📸 Opening camera...';
+
+      scanner = new Html5Qrcode("reader");
+      scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        onScanSuccess,
+        (err) => console.warn("Scan error:", err)
+      );
+    }
+
+    async function onScanSuccess(decodedText) {
+      await scanner.stop();
+      console.log("QR Code scanned:", decodedText);
+
+      if (decodedText.endsWith(".pdf")) {
+        document.getElementById('status').innerText = "✅ PDF link found. Downloading...";
+        const link = document.createElement("a");
+        link.href = decodedText;
+        link.download = "";
+        link.click();
+      } else {
+        document.getElementById('status').innerText = "📄 Not a PDF link. Creating PDF from scanned content...";
+        createPDF(decodedText);
+      }
+    }
+
+    function createPDF(text) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const lines = doc.splitTextToSize(text, 180);
+      doc.text(lines, 10, 20);
+      doc.save("scanned-content.pdf");
+
+      document.getElementById('status').innerText = "✅ Text converted to PDF and downloaded.";
+    }
+  </script>
+</body>
+</html>
